@@ -1,10 +1,12 @@
-winget install Microsoft.VisualStudio.2022.BuildTools
+winget install BrechtSanders.WinLibs.POSIX.UCRT.LLVM
 python -m pip install scons
 
-curl -L -o cppwinrt.zip https://www.nuget.org/api/v2/package/Microsoft.Windows.CppWinRT/2.0.190401.2
 mkdir	.\.tmp
-tar -xf cppwinrt.zip -C .\.tmp
+
+curl -L -o .\.tmp\cppwinrt.zip https://www.nuget.org/api/v2/package/Microsoft.Windows.CppWinRT/2.0.190401.2
+tar -xf .\.tmp\cppwinrt.zip -C .\.tmp
 .\.tmp\bin\cppwinrt.exe -in local -out .\platform\windows -verbose
+
 rmdir /s /q .\.tmp
 
 echo "DONE. Restart your terminal"
