@@ -396,4 +396,4 @@ $RECYCLE.BIN/
 *.lnk
 *.generated.props
 
-platform/windows/cppwinrt/*
+platform/windows/winrt/*
