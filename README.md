@@ -1,3 +1,11 @@
+# Onboarding::Windows
+> We need third-party installation resolved in windows.
+> Use following to resolve.
+
+```bat
+call .\install-thrdparty-windows.bat
+```
+
 # Godot Engine
 
 <p align="center">
