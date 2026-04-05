@@ -31,16 +31,48 @@
 #pragma once
 
 #include "core/object/object.h"
+#include "core/typedefs.h"
 
 #ifndef _MSC_VER
-#include <intrin.h>
-#include <winnt.h>
+
+#include <cstdint>
+
+#define	_ReturnAddress()	__builtin_return_address(0)
+
+_ALWAYS_INLINE_ bool _InterlockedCompareExchange128(
+		int64_t volatile *Destination,
+		int64_t          ExchangeHigh,
+		int64_t          ExchangeLow,
+		int64_t          *ComparandResult
+		)
+{
+	typedef int64_t	LONG64;
+
+	// Use __int128 (supported in GCC and Clang on 64-bit targets)
+	__int128 exchange = ((__int128)ExchangeHigh << 64) | (uint64_t)ExchangeLow;
+	__int128 comparand = ((__int128)ComparandResult[1] << 64) | (uint64_t)ComparandResult[0];
+
+	__int128 old = __atomic_compare_exchange_n(
+			(__int128*)Destination,          // target pointer
+			&comparand,                      // expected (updated to actual old value on failure)
+			exchange,                        // desired
+			false,                           // weak? false = strong (preferred for this intrinsic)
+			__ATOMIC_SEQ_CST,                // success memory order
+			__ATOMIC_SEQ_CST                 // failure memory order
+			);
+
+	// Write the original value back into ComparandResult (MS semantics)
+	ComparandResult[0] = (LONG64)comparand;
+	ComparandResult[1] = (LONG64)(comparand >> 64);
+
+	return (bool)old;   // returns non-zero (true) if the exchange happened
+}
 #endif
 
 class TTSDriver : public Object {
 	GDSOFTCLASS(TTSDriver, Object);
 
-public:
+	public:
 	virtual bool is_speaking() const = 0;
 	virtual bool is_paused() const = 0;
 	virtual Array get_voices() const = 0;
