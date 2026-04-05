@@ -150,11 +150,6 @@ env["x86_libtheora_opt_gcc"] = False
 env["x86_libtheora_opt_vc"] = False
 
 
-if not env.msvc and env["platform"] == "windows":
-    env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
-    env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
-    env.Append(LIBS=['advapi32']) # adding WindowsApp.lib for all
-
 # avoid issues when building with different versions of python out of the same directory
 env.SConsignFile(File("#.sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)).abspath)
 
@@ -411,6 +406,13 @@ if not env["platform"]:
 
     if env["platform"]:
         print(f"Automatically detected platform: {env['platform']}")
+
+if not env.msvc and env["platform"] == "windows":
+    env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
+    env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
+    env.Append(LIBS=['advapi32']) # adding WindowsApp.lib for all
+
+
 
 # Deprecated aliases kept for compatibility.
 if env["platform"] in compatibility_platform_aliases:
