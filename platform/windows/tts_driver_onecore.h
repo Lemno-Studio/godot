@@ -40,6 +40,11 @@ GODOT_GCC_WARNING_IGNORE("-Wstrict-aliasing")
 GODOT_CLANG_WARNING_PUSH
 GODOT_CLANG_WARNING_IGNORE("-Wnon-virtual-dtor")
 
+#ifndef _MSC_VER
+#define _ReturnAddress() __builtin_return_address(0)
+#define	_InterlockedCompareExchange128	InterlockedCompareExchange128
+#endif
+
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Media.Core.h>

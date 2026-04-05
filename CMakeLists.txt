@@ -23,7 +23,7 @@ project(dummy LANGUAGES C CXX)
 
 add_library(dummy INTERFACE)
 add_custom_target(godot-build
-	ALL scons
+	ALL scons compiledb=yes
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	)
 

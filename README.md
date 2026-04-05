@@ -9,7 +9,7 @@
 # Onboarding::Build
 > You will need cmake to build the system
 ```bat
-cmake -Bbuild
+cmake -Bbuild -GNinja
 ```
 
 # Godot Engine
