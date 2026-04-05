@@ -120,8 +120,6 @@ for x in sorted(glob.glob("platform/*")):
 
 env = Environment(tools=[])
 env.Append(CPPPATH=['#/.submod/ae2f/Core/inc'])
-env.Append(CCFLAGS=['-mcx16'])
-env.Append(CXXFLAGS=['-mcx16'])
 
 env.PrependENVPath("PATH", os.getenv("PATH"))
 env.PrependENVPath("PKG_CONFIG_PATH", os.getenv("PKG_CONFIG_PATH"))
