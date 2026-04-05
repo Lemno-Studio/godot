@@ -150,7 +150,7 @@ void register_named_setters_getters() {
 }
 
 void unregister_named_setters_getters() {
-	for (int i = 0; i < Variant::VARIANT_MAX; i++) {
+	for (int i = 0; i < Variant::VARIANT_MAX; ++i) {
 		variant_setters_getters[i].clear();
 		variant_setters_getters_names[i].clear();
 	}
@@ -170,7 +170,7 @@ bool Variant::has_member(Variant::Type p_type, const StringName &p_member) {
 Variant::Type Variant::get_member_type(Variant::Type p_type, const StringName &p_member) {
 	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, Variant::VARIANT_MAX);
 
-	for (uint32_t i = 0; i < variant_setters_getters_names[p_type].size(); i++) {
+	for (uint32_t i = 0; i < variant_setters_getters_names[p_type].size(); ++i) {
 		if (variant_setters_getters_names[p_type][i] == p_member) {
 			return variant_setters_getters[p_type][i].member_type;
 		}
@@ -193,7 +193,7 @@ int Variant::get_member_count(Type p_type) {
 Variant::ValidatedSetter Variant::get_member_validated_setter(Variant::Type p_type, const StringName &p_member) {
 	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, nullptr);
 
-	for (uint32_t i = 0; i < variant_setters_getters_names[p_type].size(); i++) {
+	for (uint32_t i = 0; i < variant_setters_getters_names[p_type].size(); ++i) {
 		if (variant_setters_getters_names[p_type][i] == p_member) {
 			return variant_setters_getters[p_type][i].validated_setter;
 		}
@@ -240,7 +240,7 @@ Variant::PTRGetter Variant::get_member_ptr_getter(Variant::Type p_type, const St
 void Variant::set_named(const StringName &p_member, const Variant &p_value, bool &r_valid) {
 	uint32_t s = variant_setters_getters[type].size();
 	if (s) {
-		for (uint32_t i = 0; i < s; i++) {
+		for (uint32_t i = 0; i < s; ++i) {
 			if (variant_setters_getters_names[type][i] == p_member) {
 				variant_setters_getters[type][i].setter(this, &p_value, r_valid);
 				return;
@@ -248,26 +248,28 @@ void Variant::set_named(const StringName &p_member, const Variant &p_value, bool
 		}
 		r_valid = false;
 
-	} else if (type == Variant::OBJECT) {
-		Object *obj = get_validated_object();
-		if (!obj) {
+	} else { switch(type) {
+		case Variant::OBJECT:
+			{
+				Object *obj = get_validated_object();
+				obj ? obj->set(p_member, p_value, &r_valid) : (void)(r_valid = false);
+			} break;
+		case Variant::DICTIONARY:
+			{
+				Dictionary &dict = VariantInternalAccessor<Dictionary>::get(this);
+				r_valid = dict.set(p_member, p_value);
+			} break;
+
+		default:
 			r_valid = false;
-		} else {
-			obj->set(p_member, p_value, &r_valid);
-			return;
-		}
-	} else if (type == Variant::DICTIONARY) {
-		Dictionary &dict = VariantInternalAccessor<Dictionary>::get(this);
-		r_valid = dict.set(p_member, p_value);
-	} else {
-		r_valid = false;
-	}
+			break;
+	}}
 }
 
 Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 	uint32_t s = variant_setters_getters[type].size();
 	if (s) {
-		for (uint32_t i = 0; i < s; i++) {
+		for (uint32_t i = 0; i < s; ++i) {
 			if (variant_setters_getters_names[type][i] == p_member) {
 				Variant ret;
 				variant_setters_getters[type][i].getter(this, &ret);
@@ -278,28 +280,36 @@ Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 	}
 
 	switch (type) {
-		case Variant::OBJECT: {
-			Object *obj = get_validated_object();
-			if (!obj) {
-				r_valid = false;
-				return "Instance base is null.";
-			} else {
-				return obj->get(p_member, &r_valid);
-			}
-		} break;
-		case Variant::DICTIONARY: {
-			const Variant *v = VariantInternalAccessor<Dictionary>::get(this).getptr(p_member);
-			if (v) {
-				r_valid = true;
-				return *v;
-			}
-		} break;
-		default: {
-			if (Variant::has_builtin_method(type, p_member)) {
-				r_valid = true;
-				return Callable(memnew(VariantCallable(*this, p_member)));
-			}
-		} break;
+		case Variant::OBJECT:
+			{
+				Object *obj = get_validated_object();
+				if (!obj) {
+					r_valid = false;
+					return "Instance base is null.";
+				} else {
+					return obj->get(p_member, &r_valid);
+				}
+			} break;
+		case Variant::DICTIONARY:
+			{
+				const Variant *v = VariantInternalAccessor<Dictionary>::get(this)
+					.getptr(p_member);
+
+				if (v) {
+					r_valid = true;
+					return *v;
+				}
+			} break;
+		default:
+			{
+				if (Variant::has_builtin_method(type, p_member)) {
+					r_valid = true;
+					return Callable(
+							memnew(VariantCallable(
+									*this
+									, p_member)));
+				}
+			} break;
 	}
 
 	r_valid = false;
@@ -349,7 +359,7 @@ Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 			/* avoid ptrconvert for performance*/ \
 			const m_base_type &v = *reinterpret_cast<const m_base_type *>(base); \
 			if (index < 0) \
-				index += v.size(); \
+			index += v.size(); \
 			OOB_TEST(index, v.size()); \
 			PtrToArg<m_elem_type>::encode(v[index], member); \
 		} \
@@ -388,7 +398,7 @@ Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 			/* avoid ptrconvert for performance*/ \
 			m_base_type &v = *reinterpret_cast<m_base_type *>(base); \
 			if (index < 0) \
-				index += v.size(); \
+			index += v.size(); \
 			OOB_TEST(index, v.size()); \
 			v.write[index] = PtrToArg<m_elem_type>::convert(member); \
 		} \
@@ -422,7 +432,7 @@ Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 			/* avoid ptrconvert for performance*/ \
 			const m_base_type &v = *reinterpret_cast<const m_base_type *>(base); \
 			if (index < 0) \
-				index += v.size(); \
+			index += v.size(); \
 			OOB_TEST(index, v.size()); \
 			PtrToArg<m_elem_type>::encode(v[index], member); \
 		} \
@@ -466,7 +476,7 @@ Variant Variant::get_named(const StringName &p_member, bool &r_valid) const {
 			/* avoid ptrconvert for performance*/ \
 			m_base_type &v = *reinterpret_cast<m_base_type *>(base); \
 			if (index < 0) \
-				index += v.size(); \
+			index += v.size(); \
 			OOB_TEST(index, v.size()); \
 			v.write[index] = PtrToArg<m_elem_type>::convert(member); \
 		} \
@@ -844,47 +854,47 @@ struct VariantIndexedSetGet_String {
 	static uint64_t get_indexed_size(const Variant *base) { return VariantInternal::get_string(base)->length(); }
 };
 
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector2, double, real_t, 2)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector2i, int64_t, int32_t, 2)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector3, double, real_t, 3)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector3i, int64_t, int32_t, 3)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector4, double, real_t, 4)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector4i, int64_t, int32_t, 4)
-INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Quaternion, double, real_t, 4)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector2, double, real_t, 2)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector2i, int64_t, int32_t, 2)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector3, double, real_t, 3)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector3i, int64_t, int32_t, 3)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector4, double, real_t, 4)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Vector4i, int64_t, int32_t, 4)
+	INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Quaternion, double, real_t, 4)
 INDEXED_SETGET_STRUCT_BUILTIN_NUMERIC(Color, double, float, 4)
 
-INDEXED_SETGET_STRUCT_BUILTIN_ACCESSOR(Transform2D, Vector2, .columns, 3)
-INDEXED_SETGET_STRUCT_BUILTIN_FUNC(Basis, Vector3, set_column, get_column, 3)
+	INDEXED_SETGET_STRUCT_BUILTIN_ACCESSOR(Transform2D, Vector2, .columns, 3)
+	INDEXED_SETGET_STRUCT_BUILTIN_FUNC(Basis, Vector3, set_column, get_column, 3)
 INDEXED_SETGET_STRUCT_BUILTIN_ACCESSOR(Projection, Vector4, .columns, 4)
 
-INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedByteArray, int64_t, uint8_t)
-INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedInt32Array, int64_t, int32_t)
-INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedInt64Array, int64_t, int64_t)
-INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedFloat32Array, double, float)
-INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedFloat64Array, double, double)
-INDEXED_SETGET_STRUCT_TYPED(PackedVector2Array, Vector2)
-INDEXED_SETGET_STRUCT_TYPED(PackedVector3Array, Vector3)
-INDEXED_SETGET_STRUCT_TYPED(PackedStringArray, String)
-INDEXED_SETGET_STRUCT_TYPED(PackedColorArray, Color)
+	INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedByteArray, int64_t, uint8_t)
+	INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedInt32Array, int64_t, int32_t)
+	INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedInt64Array, int64_t, int64_t)
+	INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedFloat32Array, double, float)
+	INDEXED_SETGET_STRUCT_TYPED_NUMERIC(PackedFloat64Array, double, double)
+	INDEXED_SETGET_STRUCT_TYPED(PackedVector2Array, Vector2)
+	INDEXED_SETGET_STRUCT_TYPED(PackedVector3Array, Vector3)
+	INDEXED_SETGET_STRUCT_TYPED(PackedStringArray, String)
+	INDEXED_SETGET_STRUCT_TYPED(PackedColorArray, Color)
 INDEXED_SETGET_STRUCT_TYPED(PackedVector4Array, Vector4)
 
-struct VariantIndexedSetterGetterInfo {
-	void (*setter)(Variant *base, int64_t index, const Variant *value, bool *valid, bool *oob) = nullptr;
-	void (*getter)(const Variant *base, int64_t index, Variant *value, bool *oob) = nullptr;
+	struct VariantIndexedSetterGetterInfo {
+		void (*setter)(Variant *base, int64_t index, const Variant *value, bool *valid, bool *oob) = nullptr;
+		void (*getter)(const Variant *base, int64_t index, Variant *value, bool *oob) = nullptr;
 
-	Variant::ValidatedIndexedSetter validated_setter = nullptr;
-	Variant::ValidatedIndexedGetter validated_getter = nullptr;
+		Variant::ValidatedIndexedSetter validated_setter = nullptr;
+		Variant::ValidatedIndexedGetter validated_getter = nullptr;
 
-	Variant::PTRIndexedSetter ptr_setter = nullptr;
-	Variant::PTRIndexedGetter ptr_getter = nullptr;
+		Variant::PTRIndexedSetter ptr_setter = nullptr;
+		Variant::PTRIndexedGetter ptr_getter = nullptr;
 
-	uint64_t (*get_indexed_size)(const Variant *base) = nullptr;
+		uint64_t (*get_indexed_size)(const Variant *base) = nullptr;
 
-	Variant::Type index_type = Variant::NIL;
-	uint32_t index_usage = PROPERTY_USAGE_DEFAULT;
+		Variant::Type index_type = Variant::NIL;
+		uint32_t index_usage = PROPERTY_USAGE_DEFAULT;
 
-	bool valid = false;
-};
+		bool valid = false;
+	};
 
 static VariantIndexedSetterGetterInfo variant_indexed_setters_getters[Variant::VARIANT_MAX];
 
@@ -1314,202 +1324,202 @@ bool Variant::iter_init(Variant &r_iter, bool &valid) const {
 	valid = true;
 	switch (type) {
 		case INT: {
-			r_iter = 0;
-			return _data._int > 0;
-		} break;
+					  r_iter = 0;
+					  return _data._int > 0;
+				  } break;
 		case FLOAT: {
-			r_iter = 0.0;
-			return _data._float > 0.0;
-		} break;
+						r_iter = 0.0;
+						return _data._float > 0.0;
+					} break;
 		case VECTOR2: {
-			double from = reinterpret_cast<const Vector2 *>(_data._mem)->x;
-			double to = reinterpret_cast<const Vector2 *>(_data._mem)->y;
+						  double from = reinterpret_cast<const Vector2 *>(_data._mem)->x;
+						  double to = reinterpret_cast<const Vector2 *>(_data._mem)->y;
 
-			r_iter = from;
+						  r_iter = from;
 
-			return from < to;
-		} break;
+						  return from < to;
+					  } break;
 		case VECTOR2I: {
-			int64_t from = reinterpret_cast<const Vector2i *>(_data._mem)->x;
-			int64_t to = reinterpret_cast<const Vector2i *>(_data._mem)->y;
+						   int64_t from = reinterpret_cast<const Vector2i *>(_data._mem)->x;
+						   int64_t to = reinterpret_cast<const Vector2i *>(_data._mem)->y;
 
-			r_iter = from;
+						   r_iter = from;
 
-			return from < to;
-		} break;
+						   return from < to;
+					   } break;
 		case VECTOR3: {
-			double from = reinterpret_cast<const Vector3 *>(_data._mem)->x;
-			double to = reinterpret_cast<const Vector3 *>(_data._mem)->y;
-			double step = reinterpret_cast<const Vector3 *>(_data._mem)->z;
+						  double from = reinterpret_cast<const Vector3 *>(_data._mem)->x;
+						  double to = reinterpret_cast<const Vector3 *>(_data._mem)->y;
+						  double step = reinterpret_cast<const Vector3 *>(_data._mem)->z;
 
-			r_iter = from;
+						  r_iter = from;
 
-			if (from == to) {
-				return false;
-			} else if (from < to) {
-				return step > 0;
-			}
-			return step < 0;
-		} break;
+						  if (from == to) {
+							  return false;
+						  } else if (from < to) {
+							  return step > 0;
+						  }
+						  return step < 0;
+					  } break;
 		case VECTOR3I: {
-			int64_t from = reinterpret_cast<const Vector3i *>(_data._mem)->x;
-			int64_t to = reinterpret_cast<const Vector3i *>(_data._mem)->y;
-			int64_t step = reinterpret_cast<const Vector3i *>(_data._mem)->z;
+						   int64_t from = reinterpret_cast<const Vector3i *>(_data._mem)->x;
+						   int64_t to = reinterpret_cast<const Vector3i *>(_data._mem)->y;
+						   int64_t step = reinterpret_cast<const Vector3i *>(_data._mem)->z;
 
-			r_iter = from;
+						   r_iter = from;
 
-			if (from == to) {
-				return false;
-			} else if (from < to) {
-				return step > 0;
-			}
-			return step < 0;
-		} break;
+						   if (from == to) {
+							   return false;
+						   } else if (from < to) {
+							   return step > 0;
+						   }
+						   return step < 0;
+					   } break;
 		case OBJECT: {
-			if (!_get_obj().obj) {
-				valid = false;
-				return false;
-			}
+						 if (!_get_obj().obj) {
+							 valid = false;
+							 return false;
+						 }
 
 #ifdef DEBUG_ENABLED
 
-			if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
-				valid = false;
-				return false;
-			}
+						 if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
+							 valid = false;
+							 return false;
+						 }
 
 #endif
-			Callable::CallError ce;
-			ce.error = Callable::CallError::CALL_OK;
-			Array ref = { r_iter };
-			Variant vref = ref;
-			const Variant *refp[] = { &vref };
-			Variant ret = _get_obj().obj->callp(CoreStringName(_iter_init), refp, 1, ce);
+						 Callable::CallError ce;
+						 ce.error = Callable::CallError::CALL_OK;
+						 Array ref = { r_iter };
+						 Variant vref = ref;
+						 const Variant *refp[] = { &vref };
+						 Variant ret = _get_obj().obj->callp(CoreStringName(_iter_init), refp, 1, ce);
 
-			if (ref.size() != 1 || ce.error != Callable::CallError::CALL_OK) {
-				valid = false;
-				return false;
-			}
+						 if (ref.size() != 1 || ce.error != Callable::CallError::CALL_OK) {
+							 valid = false;
+							 return false;
+						 }
 
-			r_iter = ref[0];
-			return ret;
-		} break;
+						 r_iter = ref[0];
+						 return ret;
+					 } break;
 
 		case STRING: {
-			const String *str = reinterpret_cast<const String *>(_data._mem);
-			if (str->is_empty()) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+						 const String *str = reinterpret_cast<const String *>(_data._mem);
+						 if (str->is_empty()) {
+							 return false;
+						 }
+						 r_iter = 0;
+						 return true;
+					 } break;
 		case DICTIONARY: {
-			const Dictionary *dic = reinterpret_cast<const Dictionary *>(_data._mem);
-			if (dic->is_empty()) {
-				return false;
-			}
+							 const Dictionary *dic = reinterpret_cast<const Dictionary *>(_data._mem);
+							 if (dic->is_empty()) {
+								 return false;
+							 }
 
-			const Variant *next = dic->next(nullptr);
-			r_iter = *next;
-			return true;
+							 const Variant *next = dic->next(nullptr);
+							 r_iter = *next;
+							 return true;
 
-		} break;
+						 } break;
 		case ARRAY: {
-			const Array *arr = reinterpret_cast<const Array *>(_data._mem);
-			if (arr->is_empty()) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+						const Array *arr = reinterpret_cast<const Array *>(_data._mem);
+						if (arr->is_empty()) {
+							return false;
+						}
+						r_iter = 0;
+						return true;
+					} break;
 		case PACKED_BYTE_ARRAY: {
-			const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
+									if (arr->size() == 0) {
+										return false;
+									}
+									r_iter = 0;
+									return true;
 
-		} break;
+								} break;
 		case PACKED_INT32_ARRAY: {
-			const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									 const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
+									 if (arr->size() == 0) {
+										 return false;
+									 }
+									 r_iter = 0;
+									 return true;
 
-		} break;
+								 } break;
 		case PACKED_INT64_ARRAY: {
-			const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									 const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
+									 if (arr->size() == 0) {
+										 return false;
+									 }
+									 r_iter = 0;
+									 return true;
 
-		} break;
+								 } break;
 		case PACKED_FLOAT32_ARRAY: {
-			const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									   const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
+									   if (arr->size() == 0) {
+										   return false;
+									   }
+									   r_iter = 0;
+									   return true;
 
-		} break;
+								   } break;
 		case PACKED_FLOAT64_ARRAY: {
-			const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									   const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
+									   if (arr->size() == 0) {
+										   return false;
+									   }
+									   r_iter = 0;
+									   return true;
 
-		} break;
+								   } break;
 		case PACKED_STRING_ARRAY: {
-			const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+									  const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
+									  if (arr->size() == 0) {
+										  return false;
+									  }
+									  r_iter = 0;
+									  return true;
+								  } break;
 		case PACKED_VECTOR2_ARRAY: {
-			const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+									   const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
+									   if (arr->size() == 0) {
+										   return false;
+									   }
+									   r_iter = 0;
+									   return true;
+								   } break;
 		case PACKED_VECTOR3_ARRAY: {
-			const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+									   const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
+									   if (arr->size() == 0) {
+										   return false;
+									   }
+									   r_iter = 0;
+									   return true;
+								   } break;
 		case PACKED_COLOR_ARRAY: {
-			const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
+									 const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
+									 if (arr->size() == 0) {
+										 return false;
+									 }
+									 r_iter = 0;
+									 return true;
 
-		} break;
+								 } break;
 		case PACKED_VECTOR4_ARRAY: {
-			const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
-			if (arr->size() == 0) {
-				return false;
-			}
-			r_iter = 0;
-			return true;
-		} break;
+									   const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
+									   if (arr->size() == 0) {
+										   return false;
+									   }
+									   r_iter = 0;
+									   return true;
+								   } break;
 		default: {
-		}
+				 }
 	}
 
 	valid = false;
@@ -1520,254 +1530,254 @@ bool Variant::iter_next(Variant &r_iter, bool &valid) const {
 	valid = true;
 	switch (type) {
 		case INT: {
-			int64_t idx = r_iter;
-			idx++;
-			if (idx >= _data._int) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+					  int64_t idx = r_iter;
+					  idx++;
+					  if (idx >= _data._int) {
+						  return false;
+					  }
+					  r_iter = idx;
+					  return true;
+				  } break;
 		case FLOAT: {
-			double idx = r_iter;
-			idx++;
-			if (idx >= _data._float) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+						double idx = r_iter;
+						idx++;
+						if (idx >= _data._float) {
+							return false;
+						}
+						r_iter = idx;
+						return true;
+					} break;
 		case VECTOR2: {
-			double to = reinterpret_cast<const Vector2 *>(_data._mem)->y;
+						  double to = reinterpret_cast<const Vector2 *>(_data._mem)->y;
 
-			double idx = r_iter;
-			idx++;
+						  double idx = r_iter;
+						  idx++;
 
-			if (idx >= to) {
-				return false;
-			}
+						  if (idx >= to) {
+							  return false;
+						  }
 
-			r_iter = idx;
-			return true;
-		} break;
+						  r_iter = idx;
+						  return true;
+					  } break;
 		case VECTOR2I: {
-			int64_t to = reinterpret_cast<const Vector2i *>(_data._mem)->y;
+						   int64_t to = reinterpret_cast<const Vector2i *>(_data._mem)->y;
 
-			int64_t idx = r_iter;
-			idx++;
+						   int64_t idx = r_iter;
+						   idx++;
 
-			if (idx >= to) {
-				return false;
-			}
+						   if (idx >= to) {
+							   return false;
+						   }
 
-			r_iter = idx;
-			return true;
-		} break;
+						   r_iter = idx;
+						   return true;
+					   } break;
 		case VECTOR3: {
-			double to = reinterpret_cast<const Vector3 *>(_data._mem)->y;
-			double step = reinterpret_cast<const Vector3 *>(_data._mem)->z;
+						  double to = reinterpret_cast<const Vector3 *>(_data._mem)->y;
+						  double step = reinterpret_cast<const Vector3 *>(_data._mem)->z;
 
-			double idx = r_iter;
-			idx += step;
+						  double idx = r_iter;
+						  idx += step;
 
-			if (step < 0 && idx <= to) {
-				return false;
-			}
+						  if (step < 0 && idx <= to) {
+							  return false;
+						  }
 
-			if (step > 0 && idx >= to) {
-				return false;
-			}
+						  if (step > 0 && idx >= to) {
+							  return false;
+						  }
 
-			r_iter = idx;
-			return true;
-		} break;
+						  r_iter = idx;
+						  return true;
+					  } break;
 		case VECTOR3I: {
-			int64_t to = reinterpret_cast<const Vector3i *>(_data._mem)->y;
-			int64_t step = reinterpret_cast<const Vector3i *>(_data._mem)->z;
+						   int64_t to = reinterpret_cast<const Vector3i *>(_data._mem)->y;
+						   int64_t step = reinterpret_cast<const Vector3i *>(_data._mem)->z;
 
-			int64_t idx = r_iter;
-			idx += step;
+						   int64_t idx = r_iter;
+						   idx += step;
 
-			if (step < 0 && idx <= to) {
-				return false;
-			}
+						   if (step < 0 && idx <= to) {
+							   return false;
+						   }
 
-			if (step > 0 && idx >= to) {
-				return false;
-			}
+						   if (step > 0 && idx >= to) {
+							   return false;
+						   }
 
-			r_iter = idx;
-			return true;
-		} break;
+						   r_iter = idx;
+						   return true;
+					   } break;
 		case OBJECT: {
-			if (!_get_obj().obj) {
-				valid = false;
-				return false;
-			}
+						 if (!_get_obj().obj) {
+							 valid = false;
+							 return false;
+						 }
 
 #ifdef DEBUG_ENABLED
 
-			if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
-				valid = false;
-				return false;
-			}
+						 if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
+							 valid = false;
+							 return false;
+						 }
 
 #endif
-			Callable::CallError ce;
-			ce.error = Callable::CallError::CALL_OK;
-			Array ref = { r_iter };
-			Variant vref = ref;
-			const Variant *refp[] = { &vref };
-			Variant ret = _get_obj().obj->callp(CoreStringName(_iter_next), refp, 1, ce);
+						 Callable::CallError ce;
+						 ce.error = Callable::CallError::CALL_OK;
+						 Array ref = { r_iter };
+						 Variant vref = ref;
+						 const Variant *refp[] = { &vref };
+						 Variant ret = _get_obj().obj->callp(CoreStringName(_iter_next), refp, 1, ce);
 
-			if (ref.size() != 1 || ce.error != Callable::CallError::CALL_OK) {
-				valid = false;
-				return false;
-			}
+						 if (ref.size() != 1 || ce.error != Callable::CallError::CALL_OK) {
+							 valid = false;
+							 return false;
+						 }
 
-			r_iter = ref[0];
+						 r_iter = ref[0];
 
-			return ret;
-		} break;
+						 return ret;
+					 } break;
 
 		case STRING: {
-			const String *str = reinterpret_cast<const String *>(_data._mem);
-			int idx = r_iter;
-			idx++;
-			if (idx >= str->length()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+						 const String *str = reinterpret_cast<const String *>(_data._mem);
+						 int idx = r_iter;
+						 idx++;
+						 if (idx >= str->length()) {
+							 return false;
+						 }
+						 r_iter = idx;
+						 return true;
+					 } break;
 		case DICTIONARY: {
-			const Dictionary *dic = reinterpret_cast<const Dictionary *>(_data._mem);
-			const Variant *next = dic->next(&r_iter);
-			if (!next) {
-				return false;
-			}
+							 const Dictionary *dic = reinterpret_cast<const Dictionary *>(_data._mem);
+							 const Variant *next = dic->next(&r_iter);
+							 if (!next) {
+								 return false;
+							 }
 
-			r_iter = *next;
-			return true;
+							 r_iter = *next;
+							 return true;
 
-		} break;
+						 } break;
 		case ARRAY: {
-			const Array *arr = reinterpret_cast<const Array *>(_data._mem);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+						const Array *arr = reinterpret_cast<const Array *>(_data._mem);
+						int idx = r_iter;
+						idx++;
+						if (idx >= arr->size()) {
+							return false;
+						}
+						r_iter = idx;
+						return true;
+					} break;
 		case PACKED_BYTE_ARRAY: {
-			const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
+									const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
+									int idx = r_iter;
+									idx++;
+									if (idx >= arr->size()) {
+										return false;
+									}
+									r_iter = idx;
+									return true;
 
-		} break;
+								} break;
 		case PACKED_INT32_ARRAY: {
-			const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
-			int32_t idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
+									 const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
+									 int32_t idx = r_iter;
+									 idx++;
+									 if (idx >= arr->size()) {
+										 return false;
+									 }
+									 r_iter = idx;
+									 return true;
 
-		} break;
+								 } break;
 		case PACKED_INT64_ARRAY: {
-			const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
-			int64_t idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
+									 const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
+									 int64_t idx = r_iter;
+									 idx++;
+									 if (idx >= arr->size()) {
+										 return false;
+									 }
+									 r_iter = idx;
+									 return true;
 
-		} break;
+								 } break;
 		case PACKED_FLOAT32_ARRAY: {
-			const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
+									   const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
+									   int idx = r_iter;
+									   idx++;
+									   if (idx >= arr->size()) {
+										   return false;
+									   }
+									   r_iter = idx;
+									   return true;
 
-		} break;
+								   } break;
 		case PACKED_FLOAT64_ARRAY: {
-			const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
+									   const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
+									   int idx = r_iter;
+									   idx++;
+									   if (idx >= arr->size()) {
+										   return false;
+									   }
+									   r_iter = idx;
+									   return true;
 
-		} break;
+								   } break;
 		case PACKED_STRING_ARRAY: {
-			const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+									  const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
+									  int idx = r_iter;
+									  idx++;
+									  if (idx >= arr->size()) {
+										  return false;
+									  }
+									  r_iter = idx;
+									  return true;
+								  } break;
 		case PACKED_VECTOR2_ARRAY: {
-			const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+									   const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
+									   int idx = r_iter;
+									   idx++;
+									   if (idx >= arr->size()) {
+										   return false;
+									   }
+									   r_iter = idx;
+									   return true;
+								   } break;
 		case PACKED_VECTOR3_ARRAY: {
-			const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+									   const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
+									   int idx = r_iter;
+									   idx++;
+									   if (idx >= arr->size()) {
+										   return false;
+									   }
+									   r_iter = idx;
+									   return true;
+								   } break;
 		case PACKED_COLOR_ARRAY: {
-			const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+									 const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
+									 int idx = r_iter;
+									 idx++;
+									 if (idx >= arr->size()) {
+										 return false;
+									 }
+									 r_iter = idx;
+									 return true;
+								 } break;
 		case PACKED_VECTOR4_ARRAY: {
-			const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
-			int idx = r_iter;
-			idx++;
-			if (idx >= arr->size()) {
-				return false;
-			}
-			r_iter = idx;
-			return true;
-		} break;
+									   const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
+									   int idx = r_iter;
+									   idx++;
+									   if (idx >= arr->size()) {
+										   return false;
+									   }
+									   r_iter = idx;
+									   return true;
+								   } break;
 		default: {
-		}
+				 }
 	}
 
 	valid = false;
@@ -1778,192 +1788,192 @@ Variant Variant::iter_get(const Variant &r_iter, bool &r_valid) const {
 	r_valid = true;
 	switch (type) {
 		case INT: {
-			return r_iter;
-		} break;
+					  return r_iter;
+				  } break;
 		case FLOAT: {
-			return r_iter;
-		} break;
+						return r_iter;
+					} break;
 		case VECTOR2: {
-			return r_iter;
-		} break;
+						  return r_iter;
+					  } break;
 		case VECTOR2I: {
-			return r_iter;
-		} break;
+						   return r_iter;
+					   } break;
 		case VECTOR3: {
-			return r_iter;
-		} break;
+						  return r_iter;
+					  } break;
 		case VECTOR3I: {
-			return r_iter;
-		} break;
+						   return r_iter;
+					   } break;
 		case OBJECT: {
-			if (!_get_obj().obj) {
-				r_valid = false;
-				return Variant();
-			}
+						 if (!_get_obj().obj) {
+							 r_valid = false;
+							 return Variant();
+						 }
 #ifdef DEBUG_ENABLED
-			if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
-				r_valid = false;
-				return Variant();
-			}
+						 if (EngineDebugger::is_active() && !_get_obj().id.is_ref_counted() && ObjectDB::get_instance(_get_obj().id) == nullptr) {
+							 r_valid = false;
+							 return Variant();
+						 }
 
 #endif
-			Callable::CallError ce;
-			ce.error = Callable::CallError::CALL_OK;
-			const Variant *refp[] = { &r_iter };
-			Variant ret = _get_obj().obj->callp(CoreStringName(_iter_get), refp, 1, ce);
+						 Callable::CallError ce;
+						 ce.error = Callable::CallError::CALL_OK;
+						 const Variant *refp[] = { &r_iter };
+						 Variant ret = _get_obj().obj->callp(CoreStringName(_iter_get), refp, 1, ce);
 
-			if (ce.error != Callable::CallError::CALL_OK) {
-				r_valid = false;
-				return Variant();
-			}
+						 if (ce.error != Callable::CallError::CALL_OK) {
+							 r_valid = false;
+							 return Variant();
+						 }
 
-			//r_iter=ref[0];
+						 //r_iter=ref[0];
 
-			return ret;
-		} break;
+						 return ret;
+					 } break;
 
 		case STRING: {
-			const String *str = reinterpret_cast<const String *>(_data._mem);
-			return str->substr(r_iter, 1);
-		} break;
+						 const String *str = reinterpret_cast<const String *>(_data._mem);
+						 return str->substr(r_iter, 1);
+					 } break;
 		case DICTIONARY: {
-			return r_iter; //iterator is the same as the key
+							 return r_iter; //iterator is the same as the key
 
-		} break;
+						 } break;
 		case ARRAY: {
-			const Array *arr = reinterpret_cast<const Array *>(_data._mem);
-			int idx = r_iter;
+						const Array *arr = reinterpret_cast<const Array *>(_data._mem);
+						int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+						if (idx < 0 || idx >= arr->size()) {
+							ERR_PRINT(vformat("iter_get: Index %d is out of bounds for Array of size %d.", idx, arr->size()));
+							r_valid = false;
+							return Variant();
+						}
 #endif
-			return arr->get(idx);
-		} break;
+						return arr->get(idx);
+					} break;
 		case PACKED_BYTE_ARRAY: {
-			const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
-			int idx = r_iter;
+									const Vector<uint8_t> *arr = &PackedArrayRef<uint8_t>::get_array(_data.packed_array);
+									int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedByteArray of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									if (idx < 0 || idx >= arr->size()) {
+										ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedByteArray of size %d.", idx, arr->size()));
+										r_valid = false;
+										return Variant();
+									}
 #endif
-			return arr->get(idx);
-		} break;
+									return arr->get(idx);
+								} break;
 		case PACKED_INT32_ARRAY: {
-			const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
-			int32_t idx = r_iter;
+									 const Vector<int32_t> *arr = &PackedArrayRef<int32_t>::get_array(_data.packed_array);
+									 int32_t idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedInt32Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									 if (idx < 0 || idx >= arr->size()) {
+										 ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedInt32Array of size %d.", idx, arr->size()));
+										 r_valid = false;
+										 return Variant();
+									 }
 #endif
-			return arr->get(idx);
-		} break;
+									 return arr->get(idx);
+								 } break;
 		case PACKED_INT64_ARRAY: {
-			const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
-			int64_t idx = r_iter;
+									 const Vector<int64_t> *arr = &PackedArrayRef<int64_t>::get_array(_data.packed_array);
+									 int64_t idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedInt64Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									 if (idx < 0 || idx >= arr->size()) {
+										 ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedInt64Array of size %d.", idx, arr->size()));
+										 r_valid = false;
+										 return Variant();
+									 }
 #endif
-			return arr->get(idx);
-		} break;
+									 return arr->get(idx);
+								 } break;
 		case PACKED_FLOAT32_ARRAY: {
-			const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
-			int idx = r_iter;
+									   const Vector<float> *arr = &PackedArrayRef<float>::get_array(_data.packed_array);
+									   int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedFloat32Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									   if (idx < 0 || idx >= arr->size()) {
+										   ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedFloat32Array of size %d.", idx, arr->size()));
+										   r_valid = false;
+										   return Variant();
+									   }
 #endif
-			return arr->get(idx);
-		} break;
+									   return arr->get(idx);
+								   } break;
 		case PACKED_FLOAT64_ARRAY: {
-			const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
-			int idx = r_iter;
+									   const Vector<double> *arr = &PackedArrayRef<double>::get_array(_data.packed_array);
+									   int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedFloat64Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									   if (idx < 0 || idx >= arr->size()) {
+										   ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedFloat64Array of size %d.", idx, arr->size()));
+										   r_valid = false;
+										   return Variant();
+									   }
 #endif
-			return arr->get(idx);
-		} break;
+									   return arr->get(idx);
+								   } break;
 		case PACKED_STRING_ARRAY: {
-			const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
-			int idx = r_iter;
+									  const Vector<String> *arr = &PackedArrayRef<String>::get_array(_data.packed_array);
+									  int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedStringArray of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									  if (idx < 0 || idx >= arr->size()) {
+										  ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedStringArray of size %d.", idx, arr->size()));
+										  r_valid = false;
+										  return Variant();
+									  }
 #endif
-			return arr->get(idx);
-		} break;
+									  return arr->get(idx);
+								  } break;
 		case PACKED_VECTOR2_ARRAY: {
-			const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
-			int idx = r_iter;
+									   const Vector<Vector2> *arr = &PackedArrayRef<Vector2>::get_array(_data.packed_array);
+									   int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector2Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									   if (idx < 0 || idx >= arr->size()) {
+										   ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector2Array of size %d.", idx, arr->size()));
+										   r_valid = false;
+										   return Variant();
+									   }
 #endif
-			return arr->get(idx);
-		} break;
+									   return arr->get(idx);
+								   } break;
 		case PACKED_VECTOR3_ARRAY: {
-			const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
-			int idx = r_iter;
+									   const Vector<Vector3> *arr = &PackedArrayRef<Vector3>::get_array(_data.packed_array);
+									   int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector3Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									   if (idx < 0 || idx >= arr->size()) {
+										   ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector3Array of size %d.", idx, arr->size()));
+										   r_valid = false;
+										   return Variant();
+									   }
 #endif
-			return arr->get(idx);
-		} break;
+									   return arr->get(idx);
+								   } break;
 		case PACKED_COLOR_ARRAY: {
-			const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
-			int idx = r_iter;
+									 const Vector<Color> *arr = &PackedArrayRef<Color>::get_array(_data.packed_array);
+									 int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedColorArray of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									 if (idx < 0 || idx >= arr->size()) {
+										 ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedColorArray of size %d.", idx, arr->size()));
+										 r_valid = false;
+										 return Variant();
+									 }
 #endif
-			return arr->get(idx);
-		} break;
+									 return arr->get(idx);
+								 } break;
 		case PACKED_VECTOR4_ARRAY: {
-			const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
-			int idx = r_iter;
+									   const Vector<Vector4> *arr = &PackedArrayRef<Vector4>::get_array(_data.packed_array);
+									   int idx = r_iter;
 #ifdef DEBUG_ENABLED
-			if (idx < 0 || idx >= arr->size()) {
-				ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector4Array of size %d.", idx, arr->size()));
-				r_valid = false;
-				return Variant();
-			}
+									   if (idx < 0 || idx >= arr->size()) {
+										   ERR_PRINT(vformat("iter_get: Index %d is out of bounds for PackedVector4Array of size %d.", idx, arr->size()));
+										   r_valid = false;
+										   return Variant();
+									   }
 #endif
-			return arr->get(idx);
-		} break;
+									   return arr->get(idx);
+								   } break;
 		default: {
-		}
+				 }
 	}
 
 	r_valid = false;
@@ -1982,44 +1992,44 @@ Variant Variant::duplicate_deep(ResourceDeepDuplicateMode p_deep_subresources_mo
 Variant Variant::recursive_duplicate(bool p_deep, ResourceDeepDuplicateMode p_deep_subresources_mode, int recursion_count) const {
 	switch (type) {
 		case OBJECT: {
-			// If the root target of duplicate() is a Resource, we can't early-reject because that
-			// resource itself must be duplicated, much as if Resource::duplicate() had been called.
-			if (p_deep_subresources_mode == RESOURCE_DEEP_DUPLICATE_NONE && recursion_count > 0) {
-				return *this;
-			}
-			Resource *res = Object::cast_to<Resource>(_get_obj().obj);
-			if (res) {
-				return res->_duplicate_from_variant(p_deep, p_deep_subresources_mode, recursion_count);
-			} else {
-				return *this;
-			}
-		} break;
+						 // If the root target of duplicate() is a Resource, we can't early-reject because that
+						 // resource itself must be duplicated, much as if Resource::duplicate() had been called.
+						 if (p_deep_subresources_mode == RESOURCE_DEEP_DUPLICATE_NONE && recursion_count > 0) {
+							 return *this;
+						 }
+						 Resource *res = Object::cast_to<Resource>(_get_obj().obj);
+						 if (res) {
+							 return res->_duplicate_from_variant(p_deep, p_deep_subresources_mode, recursion_count);
+						 } else {
+							 return *this;
+						 }
+					 } break;
 		case DICTIONARY:
-			return operator Dictionary().recursive_duplicate(p_deep, p_deep_subresources_mode, recursion_count);
+					 return operator Dictionary().recursive_duplicate(p_deep, p_deep_subresources_mode, recursion_count);
 		case ARRAY:
-			return operator Array().recursive_duplicate(p_deep, p_deep_subresources_mode, recursion_count);
+					 return operator Array().recursive_duplicate(p_deep, p_deep_subresources_mode, recursion_count);
 		case PACKED_BYTE_ARRAY:
-			return operator Vector<uint8_t>().duplicate();
+					 return operator Vector<uint8_t>().duplicate();
 		case PACKED_INT32_ARRAY:
-			return operator Vector<int32_t>().duplicate();
+					 return operator Vector<int32_t>().duplicate();
 		case PACKED_INT64_ARRAY:
-			return operator Vector<int64_t>().duplicate();
+					 return operator Vector<int64_t>().duplicate();
 		case PACKED_FLOAT32_ARRAY:
-			return operator Vector<float>().duplicate();
+					 return operator Vector<float>().duplicate();
 		case PACKED_FLOAT64_ARRAY:
-			return operator Vector<double>().duplicate();
+					 return operator Vector<double>().duplicate();
 		case PACKED_STRING_ARRAY:
-			return operator Vector<String>().duplicate();
+					 return operator Vector<String>().duplicate();
 		case PACKED_VECTOR2_ARRAY:
-			return operator Vector<Vector2>().duplicate();
+					 return operator Vector<Vector2>().duplicate();
 		case PACKED_VECTOR3_ARRAY:
-			return operator Vector<Vector3>().duplicate();
+					 return operator Vector<Vector3>().duplicate();
 		case PACKED_COLOR_ARRAY:
-			return operator Vector<Color>().duplicate();
+					 return operator Vector<Color>().duplicate();
 		case PACKED_VECTOR4_ARRAY:
-			return operator Vector<Vector4>().duplicate();
+					 return operator Vector<Vector4>().duplicate();
 		default:
-			return *this;
+					 return *this;
 	}
 }
 

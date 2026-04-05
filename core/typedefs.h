@@ -133,6 +133,7 @@ static_assert(__cplusplus >= 201703L, "Minimum of C++17 required.");
 #undef MAX
 #undef CLAMP
 
+
 template <typename T>
 constexpr const T SIGN(const T m_v) {
 	return m_v > 0 ? +1.0f : (m_v < 0 ? -1.0f : 0.0f);
@@ -145,12 +146,13 @@ constexpr auto MIN(const T m_a, const T2 m_b) {
 
 template <typename T, typename T2>
 constexpr auto MAX(const T m_a, const T2 m_b) {
+
 	return m_a > m_b ? m_a : m_b;
 }
 
 template <typename T, typename T2, typename T3>
 constexpr auto CLAMP(const T m_a, const T2 m_min, const T3 m_max) {
-	return m_a < m_min ? m_min : (m_a > m_max ? m_max : m_a);
+	return MAX(MIN(m_a, m_max), m_min);
 }
 
 // Like std::size, but without requiring any additional includes.
@@ -324,7 +326,7 @@ constexpr bool is_fully_defined_v = is_fully_defined<T>::value;
 /// The check must be made at the top of the corresponding .cpp file of a header.
 #define STATIC_ASSERT_INCOMPLETE_TYPE(m_keyword, m_type) \
 	m_keyword m_type; \
-	static_assert(!is_fully_defined_v<m_type>, #m_type " was unexpectedly fully defined. Please check the include hierarchy of '" __FILE__ "' and remove includes that resolve the " #m_keyword ".");
+static_assert(!is_fully_defined_v<m_type>, #m_type " was unexpectedly fully defined. Please check the include hierarchy of '" __FILE__ "' and remove includes that resolve the " #m_keyword ".");
 #else
 #define STATIC_ASSERT_INCOMPLETE_TYPE(m_keyword, m_type)
 #endif

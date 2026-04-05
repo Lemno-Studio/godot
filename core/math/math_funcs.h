@@ -35,6 +35,7 @@
 #include "core/typedefs.h"
 
 #include <cmath>
+#include <ae2f/bll.h>
 
 namespace Math {
 
@@ -64,6 +65,14 @@ _ALWAYS_INLINE_ double sinh(double p_x) {
 }
 _ALWAYS_INLINE_ float sinh(float p_x) {
 	return std::sinh(p_x);
+}
+
+_ALWAYS_INLINE_ double fma(double p_x, double p_y, double p_z) {
+	return std::fma(p_x, p_y, p_z);
+}
+
+_ALWAYS_INLINE_ float fma(float p_x, float p_y, float p_z) {
+	return std::fmaf(p_x, p_y, p_z);
 }
 
 _ALWAYS_INLINE_ double sinc(double p_x) {
@@ -256,17 +265,21 @@ _ALWAYS_INLINE_ bool is_finite(float p_val) {
 	return std::isfinite(p_val);
 }
 
+
 _ALWAYS_INLINE_ double abs(double p_value) {
 	return std::abs(p_value);
 }
 _ALWAYS_INLINE_ float abs(float p_value) {
 	return std::abs(p_value);
 }
+
 _ALWAYS_INLINE_ int8_t abs(int8_t p_value) {
-	return p_value > 0 ? p_value : -p_value;
+	return ae2f_bll_sel_bool1(int8_t, p_value > 0, p_value, -p_value);
 }
+
 _ALWAYS_INLINE_ int16_t abs(int16_t p_value) {
-	return p_value > 0 ? p_value : -p_value;
+	return ae2f_bll_sel_bool1(int16_t, p_value > 0, p_value, -p_value);
+
 }
 _ALWAYS_INLINE_ int32_t abs(int32_t p_value) {
 	return std::abs(p_value);

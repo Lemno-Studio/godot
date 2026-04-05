@@ -4,6 +4,7 @@ from misc.utility.scons_hints import *
 EnsureSConsVersion(4, 0)
 EnsurePythonVersion(3, 9)
 
+
 # System
 import glob
 import os
@@ -15,6 +16,23 @@ from types import ModuleType
 
 from SCons import __version__ as scons_raw_version
 from SCons.Builder import ListEmitter
+
+
+env = Environment(tools=[])
+cmake_config = env.Command(
+    target='build/CMakeCache.txt',
+    source='CMakeLists.txt',
+    action='cmake -S . -Bbuild -GNinja -Dae2f_submod=.submod'
+)
+
+cmake_build = env.Command(
+    target='build/.submod/ae2f/Core/Test-c-ae2f-Core-bll',
+    source='build/CMakeCache.txt',
+    action='cmake --build build'
+)
+
+env.Append(CPPPATH=['#/.submod/ae2f/Core/inc'])
+
 
 # Explicitly resolve the helper modules, this is done to avoid clash with
 # modules of the same name that might be randomly added (e.g. someone adding
@@ -108,11 +126,13 @@ for x in sorted(glob.glob("platform/*")):
     sys.path.remove(tmppath)
     sys.modules.pop("detect")
 
+
+
+
 # We let SCons build its default ENV as it includes OS-specific things which we don't
 # want to have to pull in manually. However we enforce no "tools", which we register
 # further down after parsing our platform-specific configuration.
 # Then we prepend PATH to make it take precedence, while preserving SCons' own entries.
-env = Environment(tools=[])
 env.PrependENVPath("PATH", os.getenv("PATH"))
 env.PrependENVPath("PKG_CONFIG_PATH", os.getenv("PKG_CONFIG_PATH"))
 if "TERM" in os.environ:  # Used for colored output.

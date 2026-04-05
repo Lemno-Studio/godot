@@ -80,6 +80,7 @@ Error QuickHull::build(const Vector<Vector3> &p_points, Geometry3D::MeshData &r_
 				continue;
 			}
 			real_t d = p_points[i][longest_axis];
+
 			if (i == 0 || d < min) {
 				simplex[0] = i;
 				min = d;

@@ -3,7 +3,7 @@
 > Use following to resolve.
 
 ```bat
-call .\install-thrdparty-windows.bat
+.\install-thrdparty-windows.bat
 ```
 
 # Godot Engine

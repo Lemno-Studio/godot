@@ -37,9 +37,11 @@
 int64_t AStar3D::get_available_point_id() const {
 	if (points.has(last_free_id)) {
 		int64_t cur_new_id = last_free_id + 1;
+
 		while (points.has(cur_new_id)) {
 			cur_new_id++;
 		}
+
 		last_free_id = cur_new_id;
 	}
 
@@ -51,21 +53,18 @@ void AStar3D::add_point(int64_t p_id, const Vector3 &p_pos, real_t p_weight_scal
 	ERR_FAIL_COND_MSG(p_weight_scale < 0.0, vformat("Can't add a point with weight scale less than 0.0: %f.", p_weight_scale));
 
 	Point **point_entry = points.getptr(p_id);
+	Point	*point_found = point_entry ? *point_entry : memnew(Point);
+
+	point_found->pos = p_pos;
+	point_found->weight_scale = p_weight_scale;
 
 	if (!point_entry) {
-		Point *pt = memnew(Point);
-		pt->id = p_id;
-		pt->pos = p_pos;
-		pt->weight_scale = p_weight_scale;
-		pt->prev_point = nullptr;
-		pt->open_pass = 0;
-		pt->closed_pass = 0;
-		pt->enabled = true;
-		points.insert_new(p_id, pt);
-	} else {
-		Point *found_pt = *point_entry;
-		found_pt->pos = p_pos;
-		found_pt->weight_scale = p_weight_scale;
+		point_found->id = p_id;
+		point_found->prev_point = nullptr;
+		point_found->open_pass = 0;
+		point_found->closed_pass = 0;
+		point_found->enabled = true;
+		points.insert_new(p_id, point_found);
 	}
 }
 

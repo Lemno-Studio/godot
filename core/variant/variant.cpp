@@ -1365,6 +1365,7 @@ void Variant::zero() {
 }
 
 void Variant::_clear_internal() {
+
 	switch (type) {
 		case STRING: {
 			reinterpret_cast<String *>(_data._mem)->~String();
