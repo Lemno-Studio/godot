@@ -26,7 +26,7 @@ cmake_config = env.Command(
 )
 
 cmake_build = env.Command(
-    target='build/.submod/ae2f/Core/Test-c-ae2f-Core-bll',
+    target='./core/math/math_funcs.cpp',
     source='build/CMakeCache.txt',
     action='cmake --build build'
 )
