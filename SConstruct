@@ -848,6 +848,8 @@ if env.msvc:
 else:
     if env["debug_symbols"]:
         if env["platform"] == "windows":
+            env.Append(LIBS=['WindowsApp.lib']) # adding WindowsApp.lib for all
+                                                # for sanity check
             if methods.using_clang(env):
                 env.AppendUnique(CCFLAGS=["-gdwarf-4"])  # clang dwarf-5 symbols are broken on Windows.
             else:
