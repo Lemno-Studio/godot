@@ -408,7 +408,6 @@ if not env["platform"]:
         print(f"Automatically detected platform: {env['platform']}")
 
 if not env.msvc and env["platform"] == "windows":
-    env.Append(LIBS=['windowsapp'])
     env.Append(LIBS=['runtimeobject'])
     env.Append(LIBS=['advapi32'])
     env.Append(LIBS=['user32'])
