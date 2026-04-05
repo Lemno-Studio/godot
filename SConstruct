@@ -848,7 +848,7 @@ if env.msvc:
 else:
     if env["debug_symbols"]:
         if env["platform"] == "windows":
-            env.Append(LIBS=['WindowsApp']) # adding WindowsApp.lib for all
+            env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
             env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
                                                 # for sanity check
             if methods.using_clang(env):
