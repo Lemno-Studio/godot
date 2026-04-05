@@ -846,11 +846,12 @@ if env.msvc:
     elif env["optimize"] == "debug" or env["optimize"] == "none":
         env["OPTIMIZELEVEL"] = "/Od"
 else:
+    if env["platform"] == "windows":
+        env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
+        env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
+
     if env["debug_symbols"]:
         if env["platform"] == "windows":
-            env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
-            env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
-                                                # for sanity check
             if methods.using_clang(env):
                 env.AppendUnique(CCFLAGS=["-gdwarf-4"])  # clang dwarf-5 symbols are broken on Windows.
             else:
