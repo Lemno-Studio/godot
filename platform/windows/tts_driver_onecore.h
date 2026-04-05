@@ -43,7 +43,6 @@ GODOT_CLANG_WARNING_IGNORE("-Wnon-virtual-dtor")
 #ifndef _MSC_VER
 #include <winnt.h>
 #define _ReturnAddress() __builtin_return_address(0)
-#define	_InterlockedCompareExchange128	InterlockedCompareExchange128
 #endif
 
 #include <winrt/Windows.Foundation.Collections.h>
