@@ -149,6 +149,12 @@ env.__class__.module_check_dependencies = methods.module_check_dependencies
 env["x86_libtheora_opt_gcc"] = False
 env["x86_libtheora_opt_vc"] = False
 
+
+if not env.msvc and env["platform"] == "windows":
+    env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
+    env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
+    env.Append(LIBS=['advapi32']) # adding WindowsApp.lib for all
+
 # avoid issues when building with different versions of python out of the same directory
 env.SConsignFile(File("#.sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)).abspath)
 
@@ -846,10 +852,6 @@ if env.msvc:
     elif env["optimize"] == "debug" or env["optimize"] == "none":
         env["OPTIMIZELEVEL"] = "/Od"
 else:
-    if env["platform"] == "windows":
-        env.Append(LIBS=['windowsapp']) # adding WindowsApp.lib for all
-        env.Append(LIBS=['runtimeobject']) # adding WindowsApp.lib for all
-
     if env["debug_symbols"]:
         if env["platform"] == "windows":
             if methods.using_clang(env):
