@@ -274,13 +274,13 @@ _ALWAYS_INLINE_ float abs(float p_value) {
 }
 
 _ALWAYS_INLINE_ int8_t abs(int8_t p_value) {
-	return ae2f_bll_sel_bool1(int8_t, p_value > 0, p_value, -p_value);
+	return ae2f_bll_sel(int_fast32_t, 0x100 - (p_value > 0), p_value, -p_value) & 0xFF;
 }
 
 _ALWAYS_INLINE_ int16_t abs(int16_t p_value) {
-	return ae2f_bll_sel_bool1(int16_t, p_value > 0, p_value, -p_value);
-
+	return ae2f_bll_sel(int_fast32_t, 0x10000 - (p_value > 0), p_value, -p_value) & 0xFFFF;
 }
+
 _ALWAYS_INLINE_ int32_t abs(int32_t p_value) {
 	return std::abs(p_value);
 }
