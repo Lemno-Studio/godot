@@ -32,6 +32,10 @@
 
 #include "core/object/object.h"
 
+#ifndef _MSC_VER
+#include <intrin.h>
+#endif
+
 class TTSDriver : public Object {
 	GDSOFTCLASS(TTSDriver, Object);
 
