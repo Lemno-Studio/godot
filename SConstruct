@@ -19,18 +19,6 @@ from SCons.Builder import ListEmitter
 
 
 env = Environment(tools=[])
-cmake_config = env.Command(
-    target='build/CMakeCache.txt',
-    source='CMakeLists.txt',
-    action='cmake -S . -Bbuild -GNinja -Dae2f_submod=.submod'
-)
-
-cmake_build = env.Command(
-    target='./core/math/math_funcs.cpp',
-    source='build/CMakeCache.txt',
-    action='cmake --build build'
-)
-
 env.Append(CPPPATH=['#/.submod/ae2f/Core/inc'])
 
 

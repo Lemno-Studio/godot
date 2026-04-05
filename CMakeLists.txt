@@ -19,13 +19,12 @@ if(NOT TARGET ae2f::Preproc)
 	add_subdirectory(${ae2f_Preproc_Wh} ${ae2f_submod}/ae2f/Preproc)
 endif()
 
-add_custom_target(dummy ALL
-	${CMAKE_COMMAND} -E copy_if_newer
-	${CMAKE_SOURCE_DIR}/math_funcs.cpp.in
-	${CMAKE_SOURCE_DIR}/core/math/math_funcs.cpp
-	SOURCES		${CMAKE_SOURCE_DIR}/math_funcs.cpp.in
-	BYPRODUCTS	${CMAKE_SOURCE_DIR}/core/math/math_funcs.cpp
+add_library(dummy INTERFACE)
+add_custom_target(godot-build
+	ALL scons
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	)
 
-add_dependencies(dummy ae2f::Preproc)
+target_link_libraries(dummy INTERFACE ae2f::Preproc)
+add_dependencies(dummy godot-build)
 

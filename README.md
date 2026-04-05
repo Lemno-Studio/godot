@@ -6,6 +6,12 @@
 .\install-thrdparty-windows.bat
 ```
 
+# Onboarding::Build
+> You will need cmake to build the system
+```bat
+cmake -Bbuild
+```
+
 # Godot Engine
 
 <p align="center">
