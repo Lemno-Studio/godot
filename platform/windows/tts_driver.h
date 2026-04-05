@@ -34,6 +34,7 @@
 
 #ifndef _MSC_VER
 #include <intrin.h>
+#include <winnt.h>
 #endif
 
 class TTSDriver : public Object {
