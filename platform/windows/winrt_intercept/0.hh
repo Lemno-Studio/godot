@@ -1,6 +1,33 @@
+
 #include <roapi.h>
 #include <combaseapi.h>
+#include <inspectable.h>
+
+
+#define IInspectable	I_Inspectable
+
+#define	GODOT_HAVE_ROERRAPI_H	0
+
+#if	GODOT_HAVE_ROERRAPI_H
 #include <roerrorapi.h>
+#else
+typedef void IRestrictedErrorInfo;
+
+static HRESULT GetRestrictedErrorInfo(IRestrictedErrorInfo **ppRestrictedErrorInfo) {
+    if (ppRestrictedErrorInfo)
+        *ppRestrictedErrorInfo = nullptr;
+    return S_OK;
+}
+
+static HRESULT SetRestrictedErrorInfo(IRestrictedErrorInfo *pRestrictedErrorInfo) {
+    return S_OK;
+}
+
+static BOOL RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *languageException) {
+    return FALSE;
+}
+
+#endif
 
 #define WINRT_GetRestrictedErrorInfo(/** [out] */ info)	\
 	GetRestrictedErrorInfo((IRestrictedErrorInfo **)(info))
@@ -20,10 +47,13 @@
 
 #define WINRT_RoUninitialize	RoUninitialize
 #define	WINRT_SetRestrictedErrorInfo(/** [in] */info)	\
-	SetRestrictedErrorInfo((IRestrictedErrorInfo*)(info))
+	SetRestrictedErrorInfo((void*)(info))
 
-#define WINRT_RoGetAgileReference(/** [in] */ opts, /** in */ riid, /** in */obj, /** in, out */ ref)	\
-	RoGetAgileReference((AgileReferenceOptions)(opts), (REFIID)(riid), (IUnknown*)(obj), (IAgileReference**)(ref))
+#define WINRT_RoGetAgileReference(/** [in] */ opts,	\
+		/** in */ riid, /** in */obj, /** in, out */ ref)	\
+RoGetAgileReference((AgileReferenceOptions)(opts)	\
+		, (REFIID)(riid), (IUnknown*)(obj)	\
+		, reinterpret_cast<::IAgileReference**>(ref))
 
 #define WINRT_CoIncrementMTAUsage(pCookie)			\
 	((HRESULT)CoIncrementMTAUsage((CO_MTA_USAGE_COOKIE*)(pCookie)))
