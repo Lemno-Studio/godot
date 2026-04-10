@@ -40,111 +40,12 @@ GODOT_GCC_WARNING_IGNORE("-Wstrict-aliasing")
 GODOT_CLANG_WARNING_PUSH
 GODOT_CLANG_WARNING_IGNORE("-Wnon-virtual-dtor")
 
-#include <windows.h>
-#include <winstring.h>
-#include <roapi.h>
-#include <combaseapi.h>
-#include <interlockedapi.h>
-#include <handleapi.h>
-#include <synchapi.h>
-
-#define	WINRT_WindowsCreateStringReference(p1, p2, p3, p4)    \
-    ((HRESULT)WindowsCreateStringReference(		\
-			(PCWSTR)(p1)				\
-			, (UINT32)(p2)				\
-			, (HSTRING_HEADER*)(p3)		\
-			, (HSTRING*)(p4)				\
-			))
-
-#define WINRT_WindowsCreateString(p1, p2, p3)    \
-    ((HRESULT)WindowsCreateString(		\
-			(PCNZWCH)(p1)		\
-			, (UINT32)(p2)		\
-			, (HSTRING*)(p3)		\
-			))
-
-#define WINRT_WindowsGetStringRawBuffer(p1, p2)        \
-    ((PCWSTR)WindowsGetStringRawBuffer(	\
-		(HSTRING)(p1)					\
-		, (UINT32*)(p2)					\
-		))
-
-#define WINRT_WindowsDeleteString(a)        \
-    ((HRESULT)WindowsDeleteString((HSTRING)(a)))
-
-#define WINRT_WindowsGetStringLen(a)        \
-    ((UINT32)WindowsGetStringLen((HSTRING)(a)))
-
-#define WINRT_RoGetActivationFactory(classid, iid, factory)	\
-	((HRESULT)(RoGetActivationFactory(		\
-			(HSTRING)(classid)	\
-			, (REFIID)(iid)		\
-			, (void**)(factory)	\
-			)))
-
-#define WINRT_CoIncrementMTAUsage(pCookie)			\
-	((HRESULT)CoIncrementMTAUsage((CO_MTA_USAGE_COOKIE*)(pCookie)))
-
-#define	WINRT_InterlockedPushEntrySList(	\
-		/** [in, out] */ ListHead					\
-		, /** [in, out] */ListEntry					\
-		)											\
-	((PSLIST_ENTRY)InterlockedPushEntrySList(		\
-			(PSLIST_HEADER)(ListHead)				\
-			, (__drv_aliasesMem PSLIST_ENTRY)(ListEntry)		\
-			))
-
-#define WINRT_InitializeSListHead(/** [in, out] */ ListHead)	\
-	InitializeSListHead((PSLIST_HEADER)(ListHead))
-
-#define WINRT_CloseHandle(/** [in] */ h)	\
-	CloseHandle((HANDLE)(h))
-
-#define WINRT_AcquireSRWLockExclusive(/** [in, out] */ lock)	\
-	AcquireSRWLockExclusive((PSRWLOCK)(lock))
-
-#define WINRT_AcquireSRWLockShared(/** [in, out] */ lock)	\
-	AcquireSRWLockShared((PSRWLOCK)(lock))
-
-#define	WINRT_WakeAllConditionVariable(/** [in, out] */ cv)	\
-	WakeAllConditionVariable((PCONDITION_VARIABLE)(cv))
-
-#define	WINRT_WindowsDuplicateString(str, newstr)	\
-	((HRESULT)WindowsDuplicateString(	\
-		(HSTRING)(str)					\
-		, (HSTRING*)newstr				\
-		))
-
-#define WINRT_SleepConditionVariableSRW(	\
-		/** [in, out] */ cv	\
-		, /** [in, out] */ lock	\
-		, /** [in] */ msec	\
-		, /** [in] */ flags	\
-		)		\
-	((BOOL)SleepConditionVariableSRW(	\
-			(PCONDITION_VARIABLE)(cv)	\
-			, (PSRWLOCK)(lock)	\
-			, (DWORD)(msec)		\
-			, (ULONG)(flags)	\
-			))
-
-#define	WINRT_WindowsStringHasEmbeddedNull(str, r_hasembednil)	\
-	((HRESULT)WindowsStringHasEmbeddedNull(	\
-			(HSTRING)(str)					\
-			, (BOOL*)(r_hasembednil)		\
-			))
-
-#define WINRT_WakeConditionVariable(/** [in, out] */ cv)	\
-	WakeConditionVariable((PCONDITION_VARIABLE)(cv))	\
-
-#define WINRT_ReleaseSRWLockShared(/** [in, out] */ lock)	\
-	ReleaseSRWLockShared((PSRWLOCK)(lock))
-#define WINRT_WindowsPreallocateStringBuffer(len, chbuf, bufhandle)	\
-	(HRESULT)(WindowsPreallocateStringBuffer(	\
-			(UINT32)(len)		\
-			, (WCHAR**)(chbuf)	\
-			. (HSTRING_BUFFER*)(bufhandle)	\
-			))
+#include "./winrt_intercept/0.hh"		/** done */
+#include "./winrt_intercept/1.hh"
+#include "./winrt_intercept/2.hh"
+#include "./winrt_intercept/3.hh"
+#include "./winrt_intercept/4.hh"
+#include "./winrt_intercept/5.hh"
 
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.Metadata.h>
