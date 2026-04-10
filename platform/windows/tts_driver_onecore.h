@@ -60,7 +60,7 @@ GODOT_CLANG_WARNING_IGNORE("-Wnon-virtual-dtor")
     ((HRESULT)WindowsCreateString(		\
 			(PCNZWCH)(p1)		\
 			, (UINT32)(p2)		\
-			, (HSTRING)(p3)		\
+			, (HSTRING*)(p3)		\
 			))
 
 #define WINRT_WindowsGetStringRawBuffer(p1, p2)        \
@@ -142,8 +142,8 @@ GODOT_CLANG_WARNING_IGNORE("-Wnon-virtual-dtor")
 #define WINRT_WindowsPreallocateStringBuffer(len, chbuf, bufhandle)	\
 	(HRESULT)(WindowsPreallocateStringBuffer(	\
 			(UINT32)(len)		\
-			(WCHAR**)(chbuf)	\
-			(HSTRING_BUFFER*)(bufhandle)	\
+			, (WCHAR**)(chbuf)	\
+			. (HSTRING_BUFFER*)(bufhandle)	\
 			))
 
 #include <winrt/Windows.Foundation.Collections.h>
