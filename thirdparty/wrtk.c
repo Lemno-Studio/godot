@@ -73,7 +73,7 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 		case ST_IDLE_FOREVER:
 			{
 				wrtk_chr_t	c;
-				while((c = fgetc(fi)) != EOF && fputc(fo));
+				while((c = fgetc(fi)) != EOF && fputc(c, fo));
 			} break;
 	}
 
