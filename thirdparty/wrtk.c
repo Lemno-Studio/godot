@@ -65,7 +65,7 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 		case ST_FOUND_EXTRN:
 			{
 				wrtk_chr_t	c;
-				while(((c = fgetc(fi)) != '}') && ((c = fgetc(fi)) != EOF));
+				while(((c = fgetc(fi)) != '}') && c != EOF);
 				ST = c == EOF ? ST_END : ST_IDLE;
 			} break;
 	}
