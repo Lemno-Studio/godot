@@ -22,4 +22,7 @@ endif()
 project(dummy LANGUAGES C CXX)
 
 execute_process(COMMAND ${CMAKE_C_COMPILER} ${CMAKE_SOURCE_DIR}/thirdparty/wrtk.c -o ${CMAKE_BINARY_DIR}/wrtk)
-execute_process(COMMAND ${CMAKE_BINARY_DIR}/wrtk ${CMAKE_SOURCE_DIR}/platform/windows/winrt/base.h)
+execute_process(COMMAND ${CMAKE_BINARY_DIR}/wrtk
+	${CMAKE_SOURCE_DIR}/platform/windows/winrt/base.h
+	${CMAKE_SOURCE_DIR}/platform/windows/winrt/base.h
+	)
