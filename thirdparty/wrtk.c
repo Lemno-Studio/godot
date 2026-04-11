@@ -51,9 +51,14 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 				ST = GETEXTERN.m_num_read == lstrlen(KEY_EXTERN) && GETEXTERN.m_lastread == '\"'
 					? ST_FOUND_EXTRN : ST;
 
-				if(ST == ST_IDLE) {
-					fwrite(KEY_EXTERN, 1, GETEXTERN.m_num_read - 1, fo);
-					fputc(GETEXTERN.m_lastread, fo);
+				if(ST != ST_FOUND_EXTRN) {
+					char STR[] = KEY_EXTERN;
+					STR[GETEXTERN.m_num_read - 1] =
+						GETEXTERN.m_lastread != EOF ? GETEXTERN.m_lastread : '\0';
+
+					STR[GETEXTERN.m_num_read] = '\0';
+
+					fputs(STR, fo);
 				}
 			} break;
 
