@@ -1,4 +1,5 @@
 # Onboarding::Windows
+## Preconfigure
 > We need third-party installation resolved in windows.
 > Use following to resolve.
 
@@ -6,10 +7,18 @@
 .\install-thrdparty-windows.bat
 ```
 
-# Onboarding::Build
-> You will need cmake to build the system
-```bat
-cmake -Bbuild -GNinja
+## Build
+> You will need cmake && any c compiler && C++17 compiler to build the system.
+> Use following to build.
+```
+.\build-windows.bat
+```
+
+## Run
+> You can select vulkan as rendering driver on cli
+
+```
+.\<godot> --rendering-driver vulkan
 ```
 
 # Godot Engine

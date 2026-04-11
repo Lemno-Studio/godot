@@ -1,4 +1,7 @@
 winget install BrechtSanders.WinLibs.POSIX.UCRT.LLVM
+winget install phthon
+
+
 python -m pip install scons
 
 mkdir	.\.tmp

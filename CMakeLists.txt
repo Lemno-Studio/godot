@@ -21,12 +21,5 @@ endif()
 
 project(dummy LANGUAGES C CXX)
 
-add_library(dummy INTERFACE)
-add_custom_target(godot-build
-	ALL scons compiledb=yes
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	)
-
-target_link_libraries(dummy INTERFACE ae2f::Preproc)
-add_dependencies(dummy godot-build)
-
+execute_process(COMMAND ${CMAKE_C_COMPILER} ./thirdparty/wrtk.c -o ./.tmp/wrtk)
+execute_process(COMMAND ./.tmp/wrtk ./platform/windows/winrt/base.h)
