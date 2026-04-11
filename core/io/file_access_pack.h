@@ -126,6 +126,7 @@ private:
 			simplified_path = ResourceUID::uid_to_path(simplified_path);
 		}
 		simplified_path = simplified_path.simplify_path().trim_prefix("res://");
+		WARN_PRINT("[_get_simplified_path]: " + simplified_path);
 		return PathMD5(simplified_path.md5_buffer());
 	}
 
