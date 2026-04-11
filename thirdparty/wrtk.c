@@ -45,7 +45,7 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 			{
 				struct KVIEW GETEXTERN = s_wrtk_get_extern(fi);
 				ST = GETEXTERN.m_lastread == EOF ? ST_END : ST;
-				ST = GETEXTERN.m_num_read == lstrlen(KEY_EXTERN) && GETEXTERN.m_lastread == 'n'
+				ST = GETEXTERN.m_num_read == lstrlen(KEY_EXTERN) && GETEXTERN.m_lastread == '\"'
 					? ST_FOUND_EXTRN : ST;
 
 				if(ST == ST_IDLE) {
