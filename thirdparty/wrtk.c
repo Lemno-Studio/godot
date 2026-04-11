@@ -74,6 +74,7 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 			{
 				wrtk_chr_t	c;
 				while((c = fgetc(fi)) != EOF && fputc(c, fo));
+				ST = ST_END;
 			} break;
 	}
 
