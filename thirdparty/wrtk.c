@@ -35,7 +35,8 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 	enum {
 		ST_END,
 		ST_IDLE,
-		ST_FOUND_EXTRN
+		ST_FOUND_EXTRN,
+		ST_IDLE_FOREVER
 	} ST;
 	ST = ST_IDLE;
 
@@ -66,7 +67,13 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 			{
 				wrtk_chr_t	c;
 				while(((c = fgetc(fi)) != '}') && c != EOF);
-				ST = c == EOF ? ST_END : ST_IDLE;
+				ST = c == EOF ? ST_END : ST_IDLE_FOREVER;
+			} break;
+
+		case ST_IDLE_FOREVER:
+			{
+				wrtk_chr_t	c;
+				while((c = fgetc(fi)) != EOF && fputc(fo));
 			} break;
 	}
 
