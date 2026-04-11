@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 enum WRTK_RET_ {
 	WRTK_RET_OK,
@@ -70,12 +71,33 @@ L_END:
 
 int main(int argc, const char** argv) {
 	FILE *fi, *fo;
+	enum WRTK_RET_	R;
+
 	if(argc != 3) return WRTK_RET_ARGINVAL;
 
+
 	fi = fopen(argv[1], "r");
-	fo = fopen(argv[2], "w");
+	fo = strcmp(argv[2], argv[1]) ? fopen(argv[2], "w") : tmpfile();
 
-	if(!(fi && fo)) return WRTK_RET_FILE_NOFOUND;;
+	if(!(fi && fo)) return WRTK_RET_FILE_NOFOUND;
 
-	return (int)wrtk_run(fi, fo);
+	R = wrtk_run(fi, fo);
+
+	fclose(fi);
+
+	if(!strcmp(argv[2], argv[1])) {
+		wrtk_chr_t ch;
+		fi = fopen(argv[1], "w");
+		fseek(fo, 0, SEEK_SET);
+
+		while ((ch = fgetc(fo)) != EOF) {
+			fputc(ch, fi);
+		}
+
+		fclose(fi);
+	}
+
+	fclose(fo);
+
+	return R;
 }
