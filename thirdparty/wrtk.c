@@ -2,7 +2,9 @@
 
 enum WRTK_RET_ {
 	WRTK_RET_OK,
-	WRTK_RET_UNEXPECTED_STATE
+	WRTK_RET_UNEXPECTED_STATE,
+	WRTK_RET_ARGINVAL,
+	WRTK_RET_FILE_NOFOUND
 };
 
 #define	KEY_EXTERN	"extern \"C\""
@@ -58,7 +60,6 @@ enum WRTK_RET_ wrtk_run(FILE* fi, FILE* fo) {
 			{
 				wrtk_chr_t	c;
 				while(((c = fgetc(fi)) != '}') && ((c = fgetc(fi)) != EOF));
-				fputc(c, fo);
 				ST = c == EOF ? ST_END : ST_IDLE;
 			} break;
 	}
@@ -69,13 +70,12 @@ L_END:
 
 int main(int argc, const char** argv) {
 	FILE *fi, *fo;
-	if(argc != 3) return -1;
+	if(argc != 3) return WRTK_RET_ARGINVAL;
 
 	fi = fopen(argv[1], "r");
 	fo = fopen(argv[2], "w");
 
-	fi = fi ? fi : stdin;
-	fo = fo ? fo : stdout;
+	if(!(fi && fo)) return WRTK_RET_FILE_NOFOUND;;
 
 	return (int)wrtk_run(fi, fo);
 }
