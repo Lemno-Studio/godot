@@ -520,7 +520,9 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 		cookie = AddDllDirectory((LPCWSTR)(dll_dir.utf16().get_data()));
 	}
 
-	p_library_handle = (void *)LoadLibraryExW((LPCWSTR)(dll_path.utf16().get_data()), nullptr, (p_data != nullptr && p_data->also_set_library_path) ? LOAD_LIBRARY_SEARCH_DEFAULT_DIRS : 0);
+	p_library_handle = (void *)LoadLibraryExW((LPCWSTR)(dll_path.utf16().get_data()), nullptr
+			, 0
+			);
 	if (!p_library_handle) {
 		if (p_data != nullptr && p_data->generate_temp_files) {
 			DirAccess::remove_absolute(load_path);
